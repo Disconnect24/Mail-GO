@@ -9,6 +9,7 @@ import (
 	"github.com/getsentry/raven-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/logrusorgru/aurora"
+	"github.com/robfig/cron"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -179,7 +180,17 @@ func main() {
 		}
 		w.Write(file)
 	})
-
+	log.Println("Preparing CronJob...")
+	// Make a cron for purging mail.
+	// Originally, this script was separate, but it may be better to build it into the main function.
+	c := cron.New()
+	c.AddFunc("@weekly", func() {
+		log.Printf("Mail-GO will now optimise the mail tables." +
+			"This may take a little while, and some interruptions may occur." +
+			"PURGING MAIL...")
+		db.Exec("DELETE FROM WC24Mail.mails WHERE `timestamp` < NOW() - INTERVAL 28 DAY;")
+	})
+	c.Start()
 	log.Println("Running...")
 
 	// We do this to log all access to the page.
