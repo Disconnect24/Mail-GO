@@ -1,12 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 )
 
-func purgeMail(db *sql.DB) {
-	log.Printf("Mail-Go will now optimise the mail tables." +
+func purgeMail() {
+	log.Printf("Mail-GO will now optimise the mail tables." +
 		"This may take a little while, and some interruptions may occur." +
 		"PURGING MAIL...")
 	//	Prepare response.
