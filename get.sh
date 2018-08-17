@@ -5,3 +5,4 @@ go get github.com/discordapp/lilliput
 go get github.com/logrusorgru/aurora
 go get github.com/go-sql-driver/mysql
 go get github.com/getsentry/raven-go
+go get github.com/robfig/cron
