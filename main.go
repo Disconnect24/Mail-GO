@@ -9,6 +9,7 @@ import (
 	"github.com/getsentry/raven-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/logrusorgru/aurora"
+	"github.com/robfig/cron"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -181,6 +182,9 @@ func main() {
 	})
 
 	log.Println("Running...")
+	c := cron.New()
+	log.Printf("Mail-GO purges Mail older than 28 days every fortnight.")
+	c.AddFunc("@every 336h", func() { purgeMail() })
 
 	// We do this to log all access to the page.
 	log.Fatal(http.ListenAndServe(global.BindTo, logRequest(http.DefaultServeMux)))
