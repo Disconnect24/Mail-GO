@@ -17,6 +17,7 @@ RUN sh get.sh
 # Copy needed parts of the Mail-Go source into builder's source,
 COPY *.go ./
 COPY patch patch
+COPY utilities utilities
 
 RUN go get ./...
 

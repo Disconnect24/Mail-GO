@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/Disconnect24/Mail-Go/utilities"
 	"github.com/discordapp/lilliput"
 	"log"
 	"strings"
@@ -11,7 +12,7 @@ import (
 const CRLF = "\r\n"
 
 func FormulateMail(from string, to string, subject string, body string, potentialImage []byte) (string, error) {
-	boundary := GenerateBoundary()
+	boundary := utilities.GenerateBoundary()
 
 	// Set up headers and set up first boundary with body.
 	// The body could be empty: that's fine, it'll have no value

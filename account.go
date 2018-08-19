@@ -4,6 +4,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"github.com/Disconnect24/Mail-Go/utilities"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/logrusorgru/aurora"
 	"log"
@@ -22,7 +23,7 @@ func Account(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wiiID := r.Form.Get("mlid")
-	if !friendCodeIsValid(wiiID) {
+	if !utilities.FriendCodeIsValid(wiiID) {
 		fmt.Fprint(w, GenAccountErrorCode(610, is, "Invalid Wii Friend Code."))
 		return
 	}
@@ -32,29 +33,29 @@ func Account(w http.ResponseWriter, r *http.Request) {
 	stmt, err := db.Prepare("INSERT IGNORE INTO `accounts` (`mlid`,`passwd`, `mlchkid` ) VALUES (?, ?, ?)")
 	if err != nil {
 		fmt.Fprint(w, GenAccountErrorCode(410, is, "Database error."))
-		LogError("Unable to prepare account statement", err)
+		utilities.LogError(ravenClient, "Unable to prepare account statement", err)
 		return
 	}
 
-	passwd := RandStringBytesMaskImprSrc(16)
+	passwd := utilities.RandStringBytesMaskImprSrc(16)
 	passwdByte := sha512.Sum512(append(salt, []byte(passwd)...))
 	passwdHash := hex.EncodeToString(passwdByte[:])
 
-	mlchkid := RandStringBytesMaskImprSrc(32)
+	mlchkid := utilities.RandStringBytesMaskImprSrc(32)
 	mlchkidByte := sha512.Sum512(append(salt, []byte(mlchkid)...))
 	mlchkidHash := hex.EncodeToString(mlchkidByte[:])
 
 	result, err := stmt.Exec(wiiID, passwdHash, mlchkidHash)
 	if err != nil {
 		fmt.Fprint(w, GenAccountErrorCode(410, is, "Database error."))
-		LogError("Unable to execute statement", err)
+		utilities.LogError(ravenClient, "Unable to execute statement", err)
 		return
 	}
 
 	affected, err := result.RowsAffected()
 	if err != nil {
 		fmt.Fprint(w, GenAccountErrorCode(410, is, "Database error."))
-		LogError("Unable to get rows affected", err)
+		utilities.LogError(ravenClient, "Unable to get rows affected", err)
 		return
 	}
 
@@ -63,7 +64,7 @@ func Account(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, GenSuccessResponseTyped(is),
+	fmt.Fprint(w, utilities.GenSuccessResponseTyped(is),
 		"mlid", is, wiiID, "\n",
 		"passwd", is, passwd, "\n",
 		"mlchkid", is, mlchkid, "\n")

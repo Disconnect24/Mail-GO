@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"github.com/Disconnect24/Mail-Go/utilities"
 	"net/url"
 	"regexp"
 )
@@ -27,7 +28,7 @@ func Auth(form url.Values) (bool, error) {
 		// [2] = passwd match
 		mlid = sendFormat[1]
 		passwd = sendFormat[2]
-	} else if friendCodeIsValid(mlid) {
+	} else if utilities.FriendCodeIsValid(mlid) {
 		// Now we need to double check passwd also exists.
 		passwd = form.Get("passwd")
 		if passwd == "" {

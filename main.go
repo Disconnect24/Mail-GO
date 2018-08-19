@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Disconnect24/Mail-Go/patch"
+	"github.com/Disconnect24/Mail-Go/utilities"
 	"github.com/getsentry/raven-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/logrusorgru/aurora"
@@ -17,7 +18,7 @@ import (
 	"regexp"
 )
 
-var global patch.Config
+var global utilities.Config
 var db *sql.DB
 var salt []byte
 var ravenClient *raven.Client
@@ -40,22 +41,6 @@ func logRequest(handler http.Handler) http.Handler {
 	})
 }
 
-func checkHandler(w http.ResponseWriter, r *http.Request) {
-	Check(w, r, db, global.Interval)
-}
-
-func receiveHandler(w http.ResponseWriter, r *http.Request) {
-	Receive(w, r, db)
-}
-
-func deleteHandler(w http.ResponseWriter, r *http.Request) {
-	Delete(w, r, db)
-}
-
-func sendHandler(w http.ResponseWriter, r *http.Request) {
-	Send(w, r, db, global)
-}
-
 func configHandle(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
@@ -63,7 +48,7 @@ func configHandle(w http.ResponseWriter, r *http.Request) {
 
 		fileWriter, _, err := r.FormFile("uploaded_config")
 		if err != nil || err == http.ErrMissingFile {
-			LogError("Incorrect file", err)
+			utilities.LogError(ravenClient, "Incorrect file", err)
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "It seems your file upload went awry. Contact our support email: support@riiconnect24.net.\nError: %v", err)
 			return
@@ -71,7 +56,7 @@ func configHandle(w http.ResponseWriter, r *http.Request) {
 
 		file, err := ioutil.ReadAll(fileWriter)
 		if err != nil {
-			LogError("Unable to read file", err)
+			utilities.LogError(ravenClient, "Unable to read file", err)
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "It seems your file upload went awry. Contact our support email support@riiconnect24.net.\nError: %v", err)
 			return
@@ -79,7 +64,7 @@ func configHandle(w http.ResponseWriter, r *http.Request) {
 
 		patched, err := patch.ModifyNwcConfig(file, db, global, ravenClient, salt)
 		if err != nil {
-			LogError("Unable to patch", err)
+			utilities.LogError(ravenClient, "Unable to patch", err)
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "It seems your patching went awry. Contact our support email: support@riiconnect24.net.\nError: %v", err)
 			return
@@ -150,10 +135,10 @@ func main() {
 	// Mail calls
 	http.HandleFunc("/cgi-bin/account.cgi", Account)
 	http.HandleFunc("/cgi-bin/patcher.cgi", Account)
-	http.HandleFunc("/cgi-bin/check.cgi", checkHandler)
-	http.HandleFunc("/cgi-bin/receive.cgi", receiveHandler)
-	http.HandleFunc("/cgi-bin/delete.cgi", deleteHandler)
-	http.HandleFunc("/cgi-bin/send.cgi", sendHandler)
+	http.HandleFunc("/cgi-bin/check.cgi", Check)
+	http.HandleFunc("/cgi-bin/receive.cgi", Receive)
+	http.HandleFunc("/cgi-bin/delete.cgi", Delete)
+	http.HandleFunc("/cgi-bin/send.cgi", Send)
 
 	mailDomain = regexp.MustCompile(`w(\d{16})\@(` + global.SendGridDomain + `)`)
 

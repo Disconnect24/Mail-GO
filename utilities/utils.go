@@ -1,4 +1,4 @@
-package main
+package utilities
 
 import (
 	"fmt"
@@ -83,8 +83,14 @@ func GenSuccessResponseTyped(divider string) string {
 // friendCodeIsValid determines if a friend code is valid by
 // checking not empty, is 17 in length, starts with w.
 // BUG(spotlightishere): does not actually determine at a numerical level if valid.
-func friendCodeIsValid(wiiID string) bool {
+func FriendCodeIsValid(wiiID string) bool {
 	return mailRegex.MatchString(wiiID)
+}
+
+// random returns a random number in a range between two given integers.
+func random(min, max int) int {
+	rand.Seed(time.Now().Unix())
+	return rand.Intn(max-min) + min
 }
 
 // GenerateBoundary returns a string with the format Nintendo used for boundaries.
@@ -92,7 +98,7 @@ func GenerateBoundary() string {
 	return fmt.Sprint(time.Now().Format("200601021504"), "/", random(1000000, 9999999))
 }
 
-func LogError(reason string, err error) {
+func LogError(ravenClient *raven.Client, reason string, err error) {
 	// Adapted from
 	// https://stackoverflow.com/a/38551362
 	pc, _, _, ok := runtime.Caller(1)
