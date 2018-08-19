@@ -14,7 +14,7 @@ services:
       - mail_data:/var/lib/mysql
       - ./schema/:/docker-entrypoint-initdb.d/:ro
   mail:
-    build: .
+    build: ..
     volumes:
       - ./config:/go/src/github.com/Disconnect24/Mail-Go/config
     ports:

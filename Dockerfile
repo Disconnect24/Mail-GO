@@ -11,7 +11,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 # We use Disconnnect24 as the name is hardcoded into patch's source code.
 WORKDIR /go/src/github.com/Disconnect24/Mail-Go
-COPY get.sh /go/src/github.com/Disconnect24/Mail-Go
+COPY docker/get.sh /go/src/github.com/Disconnect24/Mail-Go
 RUN sh get.sh
 
 # Copy needed parts of the Mail-Go source into builder's source,

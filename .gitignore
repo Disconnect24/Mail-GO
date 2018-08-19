@@ -15,5 +15,5 @@
 
 .idea/
 
-config/
-!config/config.json.example
+docker/config/
+!docker/config/config.json.example
