@@ -60,29 +60,23 @@ func Send(w http.ResponseWriter, r *http.Request) {
 
 	// Handle all the mail! \o/
 	for mailNumber, contents := range mailPart {
-		var linesToRemove string
-		// I'm making this a string for similar reasons as below.
-		// Plus it beats repeated `strconv.Itoa`s
 		var wiiRecipientIDs []string
 		var pcRecipientIDs []string
-		// Yes, senderID is a string. >.<
+		// senderID must be a string.
 		// The database contains `w<16 digit ID>` due to previous PHP scripts.
 		// POTENTIAL TODO: remove w from database?
 		var senderID string
-		var data string
+		var mailContents string
 
 		// For every new line, handle as needed.
 		scanner := bufio.NewScanner(strings.NewReader(contents))
 		for scanner.Scan() {
 			line := scanner.Text()
-			// Add it to this mail's overall data.
-			data += fmt.Sprintln(line)
 
 			if line == "DATA" {
-				// We don't actually need to do anything here,
-				// just carry on.
-				linesToRemove += fmt.Sprintln(line)
-				continue
+				// This line just tells the server beyond here to stop processing
+				// We shouldn't send that to the client, so we're done.
+				return
 			}
 
 			potentialMailFromWrapper := mailFrom.FindStringSubmatch(line)
@@ -90,10 +84,9 @@ func Send(w http.ResponseWriter, r *http.Request) {
 				potentialMailFrom := potentialMailFromWrapper[1]
 				if potentialMailFrom == "w9999999999990000" {
 					eventualOutput += utilities.GenMailErrorCode(mailNumber, 351, "w9999999999990000 tried to send mail.")
-					break
+					return
 				}
 				senderID = potentialMailFrom
-				linesToRemove += fmt.Sprintln(line)
 				continue
 			}
 
@@ -104,7 +97,6 @@ func Send(w http.ResponseWriter, r *http.Request) {
 				potentialRecipient := potentialRecipientWrapper[0]
 
 				// layout:
-				// potentialRecipient[0] = original matched string w/o groups
 				// potentialRecipient[1] = w<16 digit ID>
 				// potentialRecipient[2] = domain being sent to
 				if potentialRecipient[2] == "wii.com" {
@@ -113,20 +105,22 @@ func Send(w http.ResponseWriter, r *http.Request) {
 					// Wii <-> Wii mail. We can handle this.
 					wiiRecipientIDs = append(wiiRecipientIDs, potentialRecipient[1])
 				} else {
-					// PC <-> Wii mail. We can't handle this, but SendGrid can.
+					// PC <-> Wii mail. An actual mail server will handle this.
 					email := fmt.Sprintf("%s@%s", potentialRecipient[1], potentialRecipient[2])
 					pcRecipientIDs = append(pcRecipientIDs, email)
 				}
-
-				linesToRemove += fmt.Sprintln(line)
 			}
+
+			// This line doesn't need to be processed and can be added.
+			mailContents += line
 		}
+
 		if err := scanner.Err(); err != nil {
 			eventualOutput += utilities.GenMailErrorCode(mailNumber, 551, "Issue iterating over strings.")
 			utilities.LogError(ravenClient, "Error reading from scanner", err)
 			return
 		}
-		mailContents := strings.Replace(data, linesToRemove, "", -1)
+
 		// Replace all @wii.com references in the
 		// friend request email with our own domain.
 		// Format: w9004342343324713@wii.com <mailto:w9004342343324713@wii.com>
@@ -150,8 +144,8 @@ func Send(w http.ResponseWriter, r *http.Request) {
 		for _, pcRecipient := range pcRecipientIDs {
 			err := handlePCmail(senderID, pcRecipient, mailContents)
 			if err != nil {
-				utilities.LogError(ravenClient, "Error sending mail via SendGrid", err)
-				eventualOutput += utilities.GenMailErrorCode(mailNumber, 551, "Issue sending mail via SendGrid.")
+				utilities.LogError(ravenClient, "Error sending mail via SMTP", err)
+				eventualOutput += utilities.GenMailErrorCode(mailNumber, 551, "Issue sending mail via SMTP.")
 				return
 			}
 		}
