@@ -14,19 +14,11 @@ func purgeMail() {
 		"PURGING MAIL...")
 	// BEGONE MAIL!
 	stmtIns, err := db.Prepare("DELETE FROM WC24Mail.mails WHERE `timestamp` < NOW() - INTERVAL 28 DAY;")
-	if err != nil { // In case the statement couldn't be prepared.
-		log.Printf("Oops. Mail-GO could not purge/optimise mail." +
-			"You may want to check the database or program as there may be other issues." +
-			"If you need assistance, visit Disconnect24's Discord server." +
-			"(Failed at preparing statement.)")
-		panic(err.Error())
+	if err != nil {
+		log.Panicf("Failed to prepare purge statement: %v", err)
 	}
 	_, err = stmtIns.Exec()
-	if err != nil { // In case the statement couldn't be executed.
-		log.Printf("Oops. Mail-GO could not purge/optimise mail." +
-			"You may want to check the database or program as there may be other issues." +
-			"If you need assistance, visit Disconnect24's Discord server." +
-			"(Failed at executing statement.)")
-		panic(err.Error())
+	if err != nil {
+		log.Panicf("Failed to execute purge statement: %v", err)
 	}
 }
