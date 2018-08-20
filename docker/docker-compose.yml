@@ -2,7 +2,7 @@ version: "3"
 
 services:
   database:
-    image: disconnect24/docker-alpine-mariadb
+    image: disconnect24/docker-alpine-mariadb:10.3
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
       MYSQL_USER: rc24
