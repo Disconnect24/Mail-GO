@@ -22,7 +22,7 @@ func sendGridHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-        text := r.Form.Get("text")
+	text := r.Form.Get("text")
 
 	// TODO: Properly verify attachments.
 	if r.Form.Get("from") == "" || r.Form.Get("to") == "" {
@@ -31,10 +31,10 @@ func sendGridHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-        // If there's no text in the email.
-        if text == "" {
-                text = "No message provided."
-        }
+	// If there's no text in the email.
+	if text == "" {
+			text = "No message provided."
+	}
 
 	// Figure out who sent it.
 	fromAddress, err := mail.ParseAddress(r.Form.Get("from"))
