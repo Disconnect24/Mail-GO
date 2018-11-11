@@ -84,7 +84,7 @@ func FormulateMail(from string, to string, subject string, body string, potentia
 			"---",
 			CRLF,
 			"An error occurred processing the attached image.", CRLF,
-			"For more information, ask the sender to forward this mail to support@riiconnect24.net.",
+			"For more information, ask the sender to forward this mail to support@disconnect24.xyz.",
 			strings.Repeat(CRLF, 3),
 			"--", boundary, "--"), nil
 	}

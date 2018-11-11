@@ -81,6 +81,7 @@ func configHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	log.Printf("Mail-GO Server")
 	// Get salt for passwords
 	saltLocation := "config/salt.bin"
 	salt, err := ioutil.ReadFile(saltLocation)
