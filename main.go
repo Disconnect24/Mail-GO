@@ -83,6 +83,9 @@ func configHandle(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Printf("Mail-GO Server")
+	c := cron.New()
+	log.Printf("Mail-GO purges Mail older than 28 days every fortnight.")
+	c.AddFunc("@every 336h", func() { purgeMail() })
 	// Get salt for passwords
 	saltLocation := "config/salt.bin"
 	salt, err := ioutil.ReadFile(saltLocation)
@@ -169,9 +172,6 @@ func main() {
 	})
 
 	log.Println("Running...")
-	c := cron.New()
-	log.Printf("Mail-GO purges Mail older than 28 days every fortnight.")
-	c.AddFunc("@every 336h", func() { purgeMail() })
 
 	// We do this to log all access to the page.
 	log.Fatal(http.ListenAndServe(global.BindTo, logRequest(http.DefaultServeMux)))
