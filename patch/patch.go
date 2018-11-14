@@ -8,9 +8,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/Disconnect24/Mail-Go/utilities"
-	"github.com/getsentry/raven-go"
 	"io/ioutil"
+
+	"github.com/Disconnect24/Mail-GO/utilities"
+	"github.com/getsentry/raven-go"
 )
 
 // ModifyNwcConfig takes an original config, applies needed patches to the URL and such,

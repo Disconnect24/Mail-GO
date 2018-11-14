@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"io/ioutil"
+
 	"log"
 	"net/http"
 	"net/mail"
 	"regexp"
+
+	"github.com/google/uuid"
 )
 
 var mailDomain *regexp.Regexp
@@ -33,7 +35,7 @@ func sendGridHandler(w http.ResponseWriter, r *http.Request) {
 
 	// If there's no text in the email.
 	if text == "" {
-			text = "No message provided."
+		text = "No message provided."
 	}
 
 	// Figure out who sent it.

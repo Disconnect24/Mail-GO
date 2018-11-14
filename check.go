@@ -6,9 +6,10 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
-	"github.com/Disconnect24/Mail-Go/utilities"
 	"net/http"
 	"strconv"
+
+	"github.com/Disconnect24/Mail-GO/utilities"
 )
 
 // Check handles adding the proper interval for check.cgi along with future
@@ -72,10 +73,10 @@ func Check(w http.ResponseWriter, r *http.Request) {
 		var mlid string
 		err = result.Scan(&mlid)
 
-                key, err := hex.DecodeString("ce4cf29a3d6be1c2619172b5cb298c8972d450ad")
-                if err != nil {
-                        utilities.LogError(ravenClient, "Unable to decode key", err)
-                }
+		key, err := hex.DecodeString("ce4cf29a3d6be1c2619172b5cb298c8972d450ad")
+		if err != nil {
+			utilities.LogError(ravenClient, "Unable to decode key", err)
+		}
 
 		chlng, err := hex.DecodeString(r.Form.Get("chlng"))
 		if err != nil {

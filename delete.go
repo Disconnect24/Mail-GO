@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/Disconnect24/Mail-Go/utilities"
 	"net/http"
 	"strconv"
+
+	"github.com/Disconnect24/Mail-GO/utilities"
 )
 
 // Delete handles delete requests of mail.

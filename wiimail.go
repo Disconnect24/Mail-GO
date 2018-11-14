@@ -3,10 +3,10 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/Disconnect24/Mail-Go/utilities"
 	"github.com/discordapp/lilliput"
 	"log"
 	"strings"
+	"github.com/Disconnect24/Mail-GO/utilities"
 )
 
 const CRLF = "\r\n"

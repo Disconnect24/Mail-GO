@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/Disconnect24/Mail-Go/utilities"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/Disconnect24/Mail-GO/utilities"
 )
 
 // Receive loops through stored mail and formulates a response.

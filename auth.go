@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
-	"github.com/Disconnect24/Mail-Go/utilities"
 	"net/url"
 	"regexp"
+
+	"github.com/Disconnect24/Mail-GO/utilities"
 )
 
 var sendAuthRegex = regexp.MustCompile(`^mlid=(w\d{16})\r\npasswd=(.{16,32})$`)

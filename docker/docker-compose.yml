@@ -16,7 +16,7 @@ services:
   mail:
     build: ..
     volumes:
-      - ./config:/go/src/github.com/Disconnect24/Mail-Go/config
+      - ./config:/go/src/github.com/Disconnect24/Mail-GO/config
     ports:
       # Container 80 -> Host 8080
       - "8080:80"

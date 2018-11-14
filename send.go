@@ -3,12 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/Disconnect24/Mail-Go/utilities"
-	"github.com/google/uuid"
 	"net/http"
 	"net/smtp"
 	"regexp"
 	"strings"
+
+	"github.com/Disconnect24/Mail-GO/utilities"
+	"github.com/google/uuid"
 )
 
 var mailFormName = regexp.MustCompile(`m\d+`)

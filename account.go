@@ -4,12 +4,13 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
-	"github.com/Disconnect24/Mail-Go/utilities"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/logrusorgru/aurora"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/Disconnect24/Mail-GO/utilities"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/logrusorgru/aurora"
 )
 
 func Account(w http.ResponseWriter, r *http.Request) {

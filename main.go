@@ -5,17 +5,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/Disconnect24/Mail-Go/patch"
-	"github.com/Disconnect24/Mail-Go/utilities"
-	"github.com/getsentry/raven-go"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/logrusorgru/aurora"
-	"github.com/robfig/cron"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
+
+	"github.com/Disconnect24/Mail-GO/patch"
+	"github.com/Disconnect24/Mail-GO/utilities"
+	"github.com/getsentry/raven-go"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/logrusorgru/aurora"
+	"github.com/robfig/cron"
 )
 
 var global utilities.Config
