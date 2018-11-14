@@ -1,0 +1,14 @@
+{
+  "Port": 3306,
+  "Host": "database",
+  "Username": "rc24",
+  "Password": "changeme",
+  "DBName": "WC24Mail",
+  "Interval": 10,
+  "BindTo": ":80",
+  "SendGridKey": "changeme",
+  "SendGridDomain": "changeme.xyz",
+  "Debug": true,
+  "PatchBaseDomain": "http://mail.changeme.xyz",
+  "ChangeKeyName": "If this exists as 'RavenDSN', it will log to the given Sentry project."
+}
