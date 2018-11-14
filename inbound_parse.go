@@ -48,7 +48,6 @@ func sendGridHandler(w http.ResponseWriter, r *http.Request) {
 	toAddress := r.Form.Get("to")
 	// Validate who's being mailed.
 	potentialMailInformation := mailDomain.FindStringSubmatch(toAddress)
-	log.Println(potentialMailInformation)
 	if potentialMailInformation == nil || potentialMailInformation[2] != global.SendGridDomain {
 		log.Println("to address didn't match")
 		return
