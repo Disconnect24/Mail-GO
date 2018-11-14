@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/robfig/cron"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"github.com/getsentry/raven-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/logrusorgru/aurora"
-	"github.com/robfig/cron"
 )
 
 var global utilities.Config
@@ -83,9 +83,6 @@ func configHandle(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Printf("Mail-GO Server")
-	c := cron.New()
-	log.Printf("Mail-GO purges Mail older than 28 days every fortnight.")
-	c.AddFunc("@every 336h", func() { purgeMail() })
 	// Get salt for passwords
 	saltLocation := "config/salt.bin"
 	salt, err := ioutil.ReadFile(saltLocation)
@@ -136,7 +133,10 @@ func main() {
 			panic(err)
 		}
 	}
-
+	// Mail Purging
+	c := cron.New()
+	log.Printf("Mail-GO purges Mail older than 28 days every fortnight.")
+	c.AddFunc("@every 336h", func() { purgeMail() })
 	// Mail calls
 	http.HandleFunc("/cgi-bin/account.cgi", Account)
 	http.HandleFunc("/cgi-bin/patcher.cgi", Account)
