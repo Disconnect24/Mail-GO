@@ -19,8 +19,6 @@ COPY *.go ./
 COPY patch patch
 COPY utilities utilities
 
-RUN go get ./...
-
 # Build to name "app".
 RUN GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app .
 
