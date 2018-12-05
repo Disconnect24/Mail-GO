@@ -83,8 +83,10 @@ func Send(w http.ResponseWriter, r *http.Request) {
 			potentialMailFromWrapper := mailFrom.FindStringSubmatch(line)
 			if potentialMailFromWrapper != nil {
 				potentialMailFrom := potentialMailFromWrapper[1]
-				if potentialMailFrom == "w9999999999990000" {
-					eventualOutput += utilities.GenMailErrorCode(mailNumber, 351, "w9999999999990000 tried to send mail.")
+				// "Special" number from Nintendo, used to send to allusers@wii.com.
+				// While not necessarily hardcoded anywhere, no need to confuse.
+				if potentialMailFrom == "w9999999900000000" {
+					eventualOutput += utilities.GenMailErrorCode(mailNumber, 351, "w9999999900000000 tried to send mail.")
 					return
 				}
 				senderID = potentialMailFrom
