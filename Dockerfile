@@ -1,26 +1,33 @@
-FROM golang:1.10
+FROM golang:1.11-alpine3.8 as builder
 
-# For later timing purposes
-RUN apt-get update && apt-get install -y wget
+# We assume only git is needed for all dependencies.
+# openssl is already built-in.
+RUN apk add -U --no-cache git
 
-ENV DOCKERIZE_VERSION v0.6.1
-RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    # Clean packages
-    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && apt-get clean
-
-# We use Disconnnect24 as the name is hardcoded into patch's source code.
 WORKDIR /go/src/github.com/Disconnect24/Mail-GO
 COPY docker/get.sh /go/src/github.com/Disconnect24/Mail-GO
 RUN sh get.sh
 
-# Copy needed parts of the Mail-GO source into builder's source,
+# Copy necessary parts of the Mail-GO source into builder's source
 COPY *.go ./
 COPY patch patch
 COPY utilities utilities
 
 # Build to name "app".
-RUN GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app .
+RUN go build -o app .
+
+###########
+# RUNTIME #
+###########
+FROM alpine:3.8
+
+WORKDIR /go/src/github.com/Disconnect24/Mail-GO/
+COPY --from=builder /go/src/github.com/Disconnect24/Mail-GO/ .
+
+ENV DOCKERIZE_VERSION v0.6.1
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && apk add -U --no-cache ca-certificates
 
 # Wait until there's an actual MySQL connection we can use to start.
 CMD ["dockerize", "-wait", "tcp://database:3306", "-timeout", "60s", "/go/src/github.com/Disconnect24/Mail-GO/app"]
