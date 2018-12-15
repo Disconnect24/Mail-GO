@@ -59,6 +59,7 @@ func main() {
 
 	if global.Debug {
 		log.Println("Connecting to MySQL...")
+		gin.SetMode(gin.DebugMode)
 	}
 	db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		global.Username, global.Password, global.Host, global.Port, global.DBName))
@@ -108,7 +109,7 @@ func main() {
 }
 
 func configHandle(c *gin.Context) {
-	errorString := "It seems your file upload went awry. Contact our support email support@riiconnect24.net.\nError: %v"
+	errorString := "It seems your file upload went awry. Contact our support email at support@disconnect24.xyz.\nError: %v"
 
 	fileWriter, err := c.FormFile("uploaded_config")
 	if err != nil || err == http.ErrMissingFile {
