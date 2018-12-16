@@ -9,10 +9,10 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/google/uuid v1.1.0
+	github.com/jasonlvhit/gocron v0.0.0-20180312192515-54194c9749d4 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pkg/errors v0.8.0 // indirect
-	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/ugorji/go/codec v0.0.0-20181209151446-772ced7fd4c2 // indirect
 	golang.org/x/image v0.0.0-20181116024801-cd38e8056d9b
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect

@@ -11,7 +11,7 @@ import (
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/robfig/cron"
+	"github.com/jasonlvhit/gocron"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -30,7 +30,7 @@ func main() {
 	saltLocation := "config/salt.bin"
 	salt, err := ioutil.ReadFile(saltLocation)
 	if os.IsNotExist(err) {
-		log.Println("No salt found. Creating....")
+		log.Println("No salt found. Creating...")
 		salt = make([]byte, 128)
 
 		_, err := rand.Read(salt)
@@ -71,16 +71,18 @@ func main() {
 		panic(err)
 	}
 
+	// If we have Sentry support, go ahead and add it in.
 	if global.RavenDSN != "" {
 		ravenClient, err = raven.New(global.RavenDSN)
 		if err != nil {
 			panic(err)
 		}
 	}
-	// Mail Purging
-	c := cron.New()
-	log.Printf("Mail-GO purges Mail older than 28 days every fortnight.")
-	c.AddFunc("@every 336h", func() { purgeMail() })
+
+	// Mail purging
+	gocron.Every(2).Hours().Do(func() { purgeMail() })
+	purgeMail()
+	log.Printf("Mail-GO purges Mail older than 28 days every 2 hours.")
 
 	router := gin.Default()
 
@@ -104,7 +106,7 @@ func main() {
 	}
 
 	log.Println("Running...")
-
+	<- gocron.Start()
 	log.Println(router.Run(fmt.Sprintf(global.BindTo)))
 }
 

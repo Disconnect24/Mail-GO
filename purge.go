@@ -1,24 +1,32 @@
 package main
 
 import (
+	"github.com/Disconnect24/Mail-GO/utilities"
 	"log"
 )
 
 // Intuitive text to remind you that Mail-GO has a purging feature.
 // A feature as simple as this has caused a lot of commotion.
 // But fear begone, as the mailman no longer has to carry old and grotty mail.
-
 func purgeMail() {
-	log.Printf("Mail-GO will now optimise the mail tables." +
-		"This may take a little while, and some interruptions may occur." +
-		"PURGING MAIL...")
 	// BEGONE MAIL!
 	stmtIns, err := db.Prepare("DELETE FROM WC24Mail.mails WHERE `timestamp` < NOW() - INTERVAL 28 DAY;")
 	if err != nil {
-		log.Panicf("Failed to prepare purge statement: %v", err)
+		utilities.LogError(ravenClient, "Failed to prepare purge statement.", err)
 	}
-	_, err = stmtIns.Exec()
+	result, err := stmtIns.Exec()
 	if err != nil {
-		log.Panicf("Failed to execute purge statement: %v", err)
+		utilities.LogError(ravenClient, "Failed to execute purge statement.", err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		utilities.LogError(ravenClient, "Failed to obtain amount of changed rows.", err)
+	}
+
+	if affected > 0 {
+		log.Println("Ran purge, found", affected," affected.", )
+	} else {
+		log.Println("Ran purge, nothing to do.")
 	}
 }
