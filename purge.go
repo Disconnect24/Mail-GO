@@ -25,7 +25,7 @@ func purgeMail() {
 	}
 
 	if affected > 0 {
-		log.Println("Ran purge, found", affected," affected.", )
+		log.Println("Ran purge, found", affected, " affected.")
 	} else {
 		log.Println("Ran purge, nothing to do.")
 	}
