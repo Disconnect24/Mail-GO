@@ -3,37 +3,33 @@ package main
 import (
 	"crypto/sha512"
 	"encoding/hex"
-	"fmt"
-	"log"
-	"net/http"
-	"strconv"
-
 	"github.com/Disconnect24/Mail-GO/utilities"
+	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/logrusorgru/aurora"
+	"net/http"
 )
 
-func Account(w http.ResponseWriter, r *http.Request) {
+func Account(c *gin.Context) {
 	var is string
 	// Check if we should use `=` for a Wii or
 	// `:` for the Homebrew patcher.
-	if r.URL.Path == "/cgi-bin/account.cgi" {
+	if c.Request.URL.Path == "/cgi-bin/account.cgi" {
 		is = "="
 	} else {
 		is = ":"
 	}
 
-	wiiID := r.Form.Get("mlid")
+	wiiID := c.Query("mlid")
 	if !utilities.FriendCodeIsValid(wiiID) {
-		fmt.Fprint(w, GenAccountErrorCode(610, is, "Invalid Wii Friend Code."))
+		TypedErrorResponse(c, 610, is, "Invalid Wii Friend Code.")
 		return
 	}
 
-	w.Header().Add("Content-Type", "text/plain;charset=utf-8")
+	c.Header("Content-Type", "text/plain;charset=utf-8")
 
 	stmt, err := db.Prepare("INSERT IGNORE INTO `accounts` (`mlid`,`passwd`, `mlchkid` ) VALUES (?, ?, ?)")
 	if err != nil {
-		fmt.Fprint(w, GenAccountErrorCode(410, is, "Database error."))
+		TypedErrorResponse(c, 410, is, "Database error.")
 		utilities.LogError(ravenClient, "Unable to prepare account statement", err)
 		return
 	}
@@ -48,33 +44,26 @@ func Account(w http.ResponseWriter, r *http.Request) {
 
 	result, err := stmt.Exec(wiiID, passwdHash, mlchkidHash)
 	if err != nil {
-		fmt.Fprint(w, GenAccountErrorCode(410, is, "Database error."))
+		TypedErrorResponse(c, 410, is, "Database error.")
 		utilities.LogError(ravenClient, "Unable to execute statement", err)
 		return
 	}
 
 	affected, err := result.RowsAffected()
 	if err != nil {
-		fmt.Fprint(w, GenAccountErrorCode(410, is, "Database error."))
+		TypedErrorResponse(c, 410, is, "Database error.")
 		utilities.LogError(ravenClient, "Unable to get rows affected", err)
 		return
 	}
 
 	if affected == 0 {
-		fmt.Fprint(w, GenAccountErrorCode(211, is, "Duplicate registration."))
+		TypedErrorResponse(c, 211, is, "Duplicate registration.")
 		return
 	}
 
-	fmt.Fprint(w, utilities.GenSuccessResponseTyped(is),
+	c.String(http.StatusOK, "cd", is, "100", "\n",
+		"msg", is, "Success.", "\n",
 		"mlid", is, wiiID, "\n",
 		"passwd", is, passwd, "\n",
 		"mlchkid", is, mlchkid, "\n")
-}
-
-func GenAccountErrorCode(error int, is string, reason string) string {
-	log.Println(aurora.Red("[Warning]"), "Encountered error", error, "with reason", reason)
-
-	return fmt.Sprint(
-		"cd", is, strconv.Itoa(error), "\n",
-		"msg", is, reason, "\n")
 }

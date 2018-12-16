@@ -6,6 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 
@@ -14,34 +15,27 @@ import (
 
 // Check handles adding the proper interval for check.cgi along with future
 // challenge solving and future mail existence checking.
-func Check(w http.ResponseWriter, r *http.Request) {
+func Check(c *gin.Context) {
 	// Used later on for challenge solving.
 	var res string
 
 	mlchkidStmt, err := db.Prepare("SELECT `mlid` FROM accounts WHERE `mlchkid` = ?")
 	if err != nil {
-		fmt.Fprintf(w, utilities.GenNormalErrorCode(420, "Unable to formulate authentication statement."))
+		ErrorResponse(c, 420, "Unable to formulate authentication statement.")
 		utilities.LogError(ravenClient, "Unable to prepare check statement", err)
 		return
 	}
 	// Grab string of interval
 	interval := strconv.Itoa(global.Interval)
 	// Add required headers
-	w.Header().Add("Content-Type", "text/plain;charset=utf-8")
-	w.Header().Add("X-Wii-Mail-Download-Span", interval)
-	w.Header().Add("X-Wii-Mail-Check-Span", interval)
+	c.Header("Content-Type", "text/plain;charset=utf-8")
+	c.Header("X-Wii-Mail-Download-Span", interval)
+	c.Header("X-Wii-Mail-Check-Span", interval)
 
 	// Parse form in preparation for finding mail.
-	err = r.ParseForm()
-	if err != nil {
-		fmt.Fprint(w, utilities.GenNormalErrorCode(320, "Unable to parse parameters."))
-		utilities.LogError(ravenClient, "Unable to parse form", err)
-		return
-	}
-
-	mlchkid := r.Form.Get("mlchkid")
+	mlchkid := c.Query("mlchkid")
 	if mlchkid == "" {
-		fmt.Fprintf(w, utilities.GenNormalErrorCode(320, "Unable to parse parameters."))
+		ErrorResponse(c, 320, "Unable to parse parameters.")
 		return
 	}
 
@@ -52,7 +46,7 @@ func Check(w http.ResponseWriter, r *http.Request) {
 	// Check mlchkid
 	result, err := mlchkidStmt.Query(hash)
 	if err != nil {
-		fmt.Fprintf(w, utilities.GenNormalErrorCode(320, "Unable to parse parameters."))
+		ErrorResponse(c, 320, "Unable to parse parameters.")
 		utilities.LogError(ravenClient, "Unable to run mlchkid query", err)
 		return
 	}
@@ -78,7 +72,7 @@ func Check(w http.ResponseWriter, r *http.Request) {
 			utilities.LogError(ravenClient, "Unable to decode key", err)
 		}
 
-		chlng, err := hex.DecodeString(r.Form.Get("chlng"))
+		chlng, err := hex.DecodeString(c.Query("chlng"))
 		if err != nil {
 			utilities.LogError(ravenClient, "Unable to decode chlng string", err)
 		}
@@ -101,7 +95,7 @@ func Check(w http.ResponseWriter, r *http.Request) {
 		}
 		err = result.Err()
 		if err != nil {
-			fmt.Fprintf(w, utilities.GenNormalErrorCode(420, "Unable to formulate authentication statement."))
+			ErrorResponse(c, 420, "Unable to formulate authentication statement.")
 			utilities.LogError(ravenClient, "Unable to get user mail", err)
 			return
 		}
@@ -112,14 +106,14 @@ func Check(w http.ResponseWriter, r *http.Request) {
 
 	err = result.Err()
 	if err != nil {
-		fmt.Fprintf(w, utilities.GenNormalErrorCode(420, "Unable to formulate authentication statement."))
+		ErrorResponse(c, 420, "Unable to formulate authentication statement.")
 		utilities.LogError(ravenClient, "Generic database issue", err)
 		return
 	}
 
 	if resultsLoop == 0 {
 		// Looks like that user didn't exist.
-		fmt.Fprintf(w, utilities.GenNormalErrorCode(220, "Invalid authentication."))
+		ErrorResponse(c, 220, "Invalid authentication.")
 		return
 	}
 
@@ -132,8 +126,8 @@ func Check(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// https://github.com/RiiConnect24/Mail-Go/wiki/check.cgi for response format
-	fmt.Fprint(w, utilities.GenSuccessResponse(),
+	c.String(http.StatusOK, fmt.Sprint(SuccessfulResponse,
 		"res=", res, "\n",
 		"mail.flag=", mailFlag, "\n",
-		"interval=", interval)
+		"interval=", interval))
 }

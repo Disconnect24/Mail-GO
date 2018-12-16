@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/smtp"
 	"regexp"
@@ -17,13 +18,13 @@ var mailFrom = regexp.MustCompile(`^MAIL FROM:\s(w[0-9]*)@(?:.*)$`)
 var rcptFrom = regexp.MustCompile(`^RCPT TO:\s(.*)@(.*)$`)
 
 // Send takes POSTed mail by the Wii and stores it in the database for future usage.
-func Send(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/plain;charset=utf-8")
+func Send(c *gin.Context) {
+	c.Header("Content-Type", "text/plain;charset=utf-8")
 	// Go ahead and prepare the insert statement, for later usage.
 	stmt, err := db.Prepare("INSERT INTO `mails` (`sender_wiiID`,`mail`, `recipient_id`, `mail_id`, `message_id`) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		// Welp, that went downhill fast.
-		fmt.Fprint(w, utilities.GenNormalErrorCode(450, "Database error."))
+		ErrorResponse(c, 450, "Database error.")
 		utilities.LogError(ravenClient, "Prepared send statement error", err)
 		return
 	}
@@ -32,31 +33,31 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	mailPart := make(map[string]string)
 
 	// Parse form in preparation for finding mail.
-	err = r.ParseMultipartForm(-1)
+	form, err := c.MultipartForm()
 	if err != nil {
-		fmt.Fprint(w, utilities.GenNormalErrorCode(350, "Failed to parse mail."))
+		ErrorResponse(c, 350, "Failed to parse mail.")
 		utilities.LogError(ravenClient, "Failed to parse mail", err)
 		return
 	}
 
 	// Now check if it can be verified
-	isVerified, err := Auth(r.Form)
+	isVerified, err := AuthForSend(c.PostForm("mlid"))
 	if err != nil {
-		fmt.Fprintf(w, utilities.GenNormalErrorCode(666, "Something weird happened."))
+		ErrorResponse(c, 666, "Something weird happened.")
 		utilities.LogError(ravenClient, "Error changing from authentication database.", err)
 		return
 	} else if !isVerified {
-		fmt.Fprintf(w, utilities.GenNormalErrorCode(240, "An authentication error occurred."))
+		ErrorResponse(c, 240, "An authentication error occurred.")
 		return
 	}
 
-	for name, contents := range r.MultipartForm.Value {
+	for name, contents := range form.Value {
 		if mailFormName.MatchString(name) {
 			mailPart[name] = contents[0]
 		}
 	}
 
-	eventualOutput := utilities.GenSuccessResponse()
+	eventualOutput := SuccessfulResponse
 	eventualOutput += fmt.Sprint("mlnum=", len(mailPart), "\n")
 
 	// Handle all the mail! \o/
@@ -86,7 +87,7 @@ func Send(w http.ResponseWriter, r *http.Request) {
 				// "Special" number from Nintendo, used to send to allusers@wii.com.
 				// While not necessarily hardcoded anywhere, no need to confuse.
 				if potentialMailFrom == "w9999999900000000" {
-					eventualOutput += utilities.GenMailErrorCode(mailNumber, 351, "w9999999900000000 tried to send mail.")
+					eventualOutput += MailErrorResponse(351, "w9999999900000000 tried to send mail.", mailNumber)
 					return
 				}
 				senderID = potentialMailFrom
@@ -119,7 +120,7 @@ func Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			eventualOutput += utilities.GenMailErrorCode(mailNumber, 551, "Issue iterating over strings.")
+			eventualOutput += MailErrorResponse(551, "Issue iterating over strings.", mailNumber)
 			utilities.LogError(ravenClient, "Error reading from scanner", err)
 			return
 		}
@@ -138,7 +139,7 @@ func Send(w http.ResponseWriter, r *http.Request) {
 			// Splice wiiRecipient to drop w from 16 digit ID.
 			_, err := stmt.Exec(senderID, mailContents, wiiRecipient[1:], uuid.New().String(), uuid.New().String())
 			if err != nil {
-				eventualOutput += utilities.GenMailErrorCode(mailNumber, 450, "Database error.")
+				eventualOutput += MailErrorResponse(450, "Database error.", mailNumber)
 				utilities.LogError(ravenClient, "Error inserting mail", err)
 				return
 			}
@@ -148,15 +149,15 @@ func Send(w http.ResponseWriter, r *http.Request) {
 			err := handlePCmail(senderID, pcRecipient, mailContents)
 			if err != nil {
 				utilities.LogError(ravenClient, "Error sending mail via SMTP", err)
-				eventualOutput += utilities.GenMailErrorCode(mailNumber, 551, "Issue sending mail via SMTP.")
+				eventualOutput += MailErrorResponse(551, "Issue sending mail via SMTP.", mailNumber)
 				return
 			}
 		}
-		eventualOutput += utilities.GenMailErrorCode(mailNumber, 100, "Success.")
+		eventualOutput += MailErrorResponse(100, "Success.", mailNumber)
 	}
 
 	// We're completely done now.
-	fmt.Fprint(w, eventualOutput)
+	c.String(http.StatusOK, eventualOutput)
 }
 
 func handlePCmail(senderID string, pcRecipient string, mailContents string) error {

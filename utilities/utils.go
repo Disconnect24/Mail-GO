@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"github.com/getsentry/raven-go"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/logrusorgru/aurora"
 	"log"
 	"math/rand"
 	"regexp"
 	"runtime"
-	"strconv"
 	"time"
 )
 
@@ -42,42 +40,6 @@ func RandStringBytesMaskImprSrc(n int) string {
 	}
 
 	return string(b)
-}
-
-// GenMailErrorCode formulates a proper response needed for mail-specific errors.
-func GenMailErrorCode(mailNumber string, error int, reason string) string {
-	if error != 100 {
-		log.Println(aurora.Red("[Warning]"), "Encountered error", error, "with reason", reason)
-	}
-
-	return fmt.Sprint(
-		"cd", mailNumber[1:], "=", strconv.Itoa(error), "\n",
-		"msg", mailNumber[1:], "=", reason, "\n")
-}
-
-// GenNormalErrorCode formulates a proper response for overall errors.
-func GenNormalErrorCode(error int, reason string) string {
-	switch error {
-	case 220:
-		break
-	default:
-		log.Println(aurora.Red("[Warning]"), "Encountered error", error, "with reason", reason)
-	}
-	return fmt.Sprint(
-		"cd=", strconv.Itoa(error), "\n",
-		"msg=", reason, "\n")
-}
-
-// GenSuccessResponse returns a successful message, using = as the divider between characters.
-func GenSuccessResponse() string {
-	return GenSuccessResponseTyped("=")
-}
-
-// GenSuccessResponseTyped returns a successful message, using the specified character as a divider.
-func GenSuccessResponseTyped(divider string) string {
-	return fmt.Sprint(
-		"cd", divider, "100\n",
-		"msg", divider, "Success.\n")
 }
 
 // friendCodeIsValid determines if a friend code is valid by

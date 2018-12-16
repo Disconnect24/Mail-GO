@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,32 +12,26 @@ import (
 
 // Receive loops through stored mail and formulates a response.
 // Then, if applicable, marks the mail as received.
-func Receive(w http.ResponseWriter, r *http.Request) {
-	// Parse form.
-	err := r.ParseForm()
+func Receive(c *gin.Context) {
+	mlidWithW := c.Query("mlid")
+	isVerified, err := Auth(mlidWithW, c.Query("passwd"))
 	if err != nil {
-		utilities.LogError(ravenClient, "Error parsing form", err)
-		return
-	}
+		ErrorResponse(c, 531, "Something weird happened.")
 
-	isVerified, err := Auth(r.Form)
-	if err != nil {
-		fmt.Fprintf(w, utilities.GenNormalErrorCode(531, "Something weird happened."))
 		utilities.LogError(ravenClient, "Error receiving.", err)
 		return
 	} else if !isVerified {
-		fmt.Fprintf(w, utilities.GenNormalErrorCode(230, "An authentication error occurred."))
+		ErrorResponse(c, 230, "An authentication error occurred.")
 		return
 	}
 
 	// We already know the mlid is valid from previous
 	// so we don't need to further check.
-	mlidWithW := r.Form.Get("mlid")
 	mlid := mlidWithW[1:]
 
-	maxsize, err := strconv.Atoi(r.Form.Get("maxsize"))
+	maxsize, err := strconv.Atoi(c.Query("maxsize"))
 	if err != nil {
-		fmt.Fprint(w, utilities.GenNormalErrorCode(330, "maxsize needs to be an int."))
+		ErrorResponse(c, 330, "maxsize needs to be an int.")
 		return
 	}
 
@@ -64,7 +59,7 @@ func Receive(w http.ResponseWriter, r *http.Request) {
 
 	// Loop through mail and make the output.
 	wc24MimeBoundary := utilities.GenerateBoundary()
-	w.Header().Add("Content-Type", fmt.Sprint("multipart/mixed; boundary=", wc24MimeBoundary))
+	c.Header("Content-Type", fmt.Sprint("multipart/mixed; boundary=", wc24MimeBoundary))
 
 	defer storedMail.Close()
 	for storedMail.Next() {
@@ -120,11 +115,11 @@ func Receive(w http.ResponseWriter, r *http.Request) {
 	request := fmt.Sprint("--", wc24MimeBoundary, "\r\n",
 		"Content-Type: text/plain\r\n\r\n",
 		"This part is ignored.\r\n\r\n\r\n\n",
-		utilities.GenSuccessResponse(),
+		SuccessfulResponse,
 		"mailnum=", amountOfMail, "\n",
 		"mailsize=", mailSize, "\n",
 		"allnum=", amountOfMail, "\n",
 		totalMailOutput,
 		"\r\n--", wc24MimeBoundary, "--\r\n")
-	fmt.Fprint(w, request)
+	c.String(http.StatusOK, request)
 }

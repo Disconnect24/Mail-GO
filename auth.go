@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
-	"net/url"
 	"regexp"
 
 	"github.com/Disconnect24/Mail-GO/utilities"
@@ -13,13 +12,7 @@ import (
 
 var sendAuthRegex = regexp.MustCompile(`^mlid=(w\d{16})\r\npasswd=(.{16,32})$`)
 
-// Auth is a function designed to parse potential information from
-// a WC24 request, such as mlchkid and passwd.
-// It takes a given type and attempts to correspond that to one recorded in a database.
-func Auth(form url.Values) (bool, error) {
-	mlid := form.Get("mlid")
-	var passwd string
-
+func AuthForSend(mlid string) (bool, error) {
 	// First, check if it's the send format of mlid.
 	sendFormat := sendAuthRegex.FindStringSubmatch(mlid)
 	if sendFormat != nil {
@@ -28,10 +21,20 @@ func Auth(form url.Values) (bool, error) {
 		// [1] = mlid match
 		// [2] = passwd match
 		mlid = sendFormat[1]
-		passwd = sendFormat[2]
-	} else if utilities.FriendCodeIsValid(mlid) {
+		passwd := sendFormat[2]
+		return Auth(mlid, passwd)
+	} else {
+		// It's not send nor anything else we know at this point.
+		return false, errors.New("invalid mail ID")
+	}
+}
+
+// Auth is a function designed to parse potential information from
+// a WC24 request, such as mlchkid and passwd.
+// It takes a given type and attempts to correspond that to one recorded in a database.
+func Auth(mlid string, passwd string) (bool, error) {
+	if utilities.FriendCodeIsValid(mlid) {
 		// Now we need to double check passwd also exists.
-		passwd = form.Get("passwd")
 		if passwd == "" {
 			return false, errors.New("invalid authentication type")
 		}

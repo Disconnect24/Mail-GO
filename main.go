@@ -5,81 +5,24 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/Disconnect24/Mail-GO/patch"
+	"github.com/Disconnect24/Mail-GO/utilities"
+	"github.com/getsentry/raven-go"
+	"github.com/gin-contrib/static"
+	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/robfig/cron"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
-
-	"github.com/Disconnect24/Mail-GO/patch"
-	"github.com/Disconnect24/Mail-GO/utilities"
-	"github.com/getsentry/raven-go"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/logrusorgru/aurora"
 )
 
 var global utilities.Config
 var db *sql.DB
 var salt []byte
 var ravenClient *raven.Client
-
-func logRequest(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Parse form for further usage.
-		r.ParseForm()
-
-		if global.Debug {
-			log.Printf("%s %s", aurora.Blue(r.Method), aurora.Red(r.URL))
-			for name, value := range r.Form {
-				log.Print(name, " ", aurora.Green("=>"), " ", value)
-			}
-			log.Printf("Accessing from: %s", aurora.Blue(r.Host))
-		}
-
-		// Finally, serve.
-		handler.ServeHTTP(w, r)
-	})
-}
-
-func configHandle(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		r.ParseForm()
-
-		fileWriter, _, err := r.FormFile("uploaded_config")
-		if err != nil || err == http.ErrMissingFile {
-			utilities.LogError(ravenClient, "Incorrect file", err)
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "It seems your file upload went awry. Contact our support email: support@riiconnect24.net.\nError: %v", err)
-			return
-		}
-
-		file, err := ioutil.ReadAll(fileWriter)
-		if err != nil {
-			utilities.LogError(ravenClient, "Unable to read file", err)
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "It seems your file upload went awry. Contact our support email support@riiconnect24.net.\nError: %v", err)
-			return
-		}
-
-		patched, err := patch.ModifyNwcConfig(file, db, global, ravenClient, salt)
-		if err != nil {
-			utilities.LogError(ravenClient, "Unable to patch", err)
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "It seems your patching went awry. Contact our support email: support@riiconnect24.net.\nError: %v", err)
-			return
-		}
-		w.Header().Add("Content-Type", "application/octet-stream")
-		w.Header().Add("Content-Disposition", "attachment; filename=\"nwc24msg.cfg\"")
-		w.Write(patched)
-		break
-	case "GET":
-		fmt.Fprint(w, "This page doesn't do anything by itself. Try going to the main site.")
-	default:
-		break
-	}
-}
 
 func main() {
 	log.Printf("Mail-GO Server")
@@ -137,42 +80,65 @@ func main() {
 	c := cron.New()
 	log.Printf("Mail-GO purges Mail older than 28 days every fortnight.")
 	c.AddFunc("@every 336h", func() { purgeMail() })
-	// Mail calls
-	http.HandleFunc("/cgi-bin/account.cgi", Account)
-	http.HandleFunc("/cgi-bin/patcher.cgi", Account)
-	http.HandleFunc("/cgi-bin/check.cgi", Check)
-	http.HandleFunc("/cgi-bin/receive.cgi", Receive)
-	http.HandleFunc("/cgi-bin/delete.cgi", Delete)
-	http.HandleFunc("/cgi-bin/send.cgi", Send)
 
-	mailDomain = regexp.MustCompile(`w(\d{16})\@(` + global.SendGridDomain + `)`)
-
-	// Inbound parse
-	http.HandleFunc("/sendgrid/parse", sendGridHandler)
+	router := gin.Default()
 
 	// Site
-	http.HandleFunc("/patch", configHandle)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Load from site folder
-		var file []byte
-		var err error
-		if r.URL.Path == "/" {
-			// We want index.html
-			file, err = ioutil.ReadFile("./patch/site/index.html")
-		} else {
-			file, err = ioutil.ReadFile("./patch/site" + r.URL.Path)
-		}
+	router.Use(static.Serve("/", static.LocalFile("./patch/site", false)))
+	router.POST("/patch", configHandle)
 
-		// We only want existing pages.
-		if err != nil {
-			http.NotFound(w, r)
-			return
-		}
-		w.Write(file)
-	})
+	// Inbound parse
+	router.POST("/sendgrid/parse", sendGridHandler)
+	mailDomain = regexp.MustCompile(`w(\d{16})\@(` + global.SendGridDomain + `)`)
+
+	// Mail calls
+	v1 := router.Group("/cgi-bin")
+	{
+		v1.GET("/account.cgi", Account)
+		v1.POST("/patcher.cgi", Account)
+		v1.POST("/check.cgi", Check)
+		v1.POST("/receive.cgi", Receive)
+		v1.POST("/delete.cgi", Delete)
+		v1.POST("/send.cgi", Send)
+	}
 
 	log.Println("Running...")
 
-	// We do this to log all access to the page.
-	log.Fatal(http.ListenAndServe(global.BindTo, logRequest(http.DefaultServeMux)))
+	log.Println(router.Run(fmt.Sprintf(global.BindTo)))
+}
+
+func configHandle(c *gin.Context) {
+	errorString := "It seems your file upload went awry. Contact our support email support@riiconnect24.net.\nError: %v"
+
+	fileWriter, err := c.FormFile("uploaded_config")
+	if err != nil || err == http.ErrMissingFile {
+		utilities.LogError(ravenClient, "Incorrect file", err)
+		c.String(http.StatusBadRequest, errorString, err)
+		return
+	}
+
+	file, err := fileWriter.Open()
+	if err != nil {
+		utilities.LogError(ravenClient, "Unable to read file", err)
+		c.String(http.StatusBadRequest, errorString, err)
+		return
+	}
+
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		utilities.LogError(ravenClient, "Unable to read file", err)
+		c.String(http.StatusBadRequest, errorString, err)
+		return
+	}
+
+	patched, err := patch.ModifyNwcConfig(content, db, global, ravenClient, salt)
+	if err != nil {
+		utilities.LogError(ravenClient, "Unable to patch", err)
+		c.String(http.StatusInternalServerError, errorString, err)
+		return
+	}
+
+	c.Header("Content-Disposition", `attachment; filename="nwc24msg.cfg"`)
+	c.Data(http.StatusOK, "application/octet-stream", patched)
+
 }
