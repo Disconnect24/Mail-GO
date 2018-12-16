@@ -16,7 +16,7 @@ import (
 var mailDomain *regexp.Regexp
 
 func sendGridHandler(c *gin.Context) {
-	text := c.Query("text")
+	text := c.PostForm("text")
 
 	// TODO: Properly verify attachments.
 	if c.PostForm("from") == "" || c.PostForm("to") == "" {
@@ -71,7 +71,7 @@ func sendGridHandler(c *gin.Context) {
 		}
 	}
 
-	wiiMail, err := FormulateMail(fromAddress.Address, toAddress, c.Query("subject"), text, attachedFile)
+	wiiMail, err := FormulateMail(fromAddress.Address, toAddress, c.PostForm("subject"), text, attachedFile)
 	if err != nil {
 		log.Printf("error formulating mail: %v", err)
 		return

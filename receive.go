@@ -13,8 +13,8 @@ import (
 // Receive loops through stored mail and formulates a response.
 // Then, if applicable, marks the mail as received.
 func Receive(c *gin.Context) {
-	mlidWithW := c.Query("mlid")
-	isVerified, err := Auth(mlidWithW, c.Query("passwd"))
+	mlidWithW := c.PostForm("mlid")
+	isVerified, err := Auth(mlidWithW, c.PostForm("passwd"))
 	if err != nil {
 		ErrorResponse(c, 531, "Something weird happened.")
 
@@ -29,7 +29,7 @@ func Receive(c *gin.Context) {
 	// so we don't need to further check.
 	mlid := mlidWithW[1:]
 
-	maxsize, err := strconv.Atoi(c.Query("maxsize"))
+	maxsize, err := strconv.Atoi(c.PostForm("maxsize"))
 	if err != nil {
 		ErrorResponse(c, 330, "maxsize needs to be an int.")
 		return

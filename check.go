@@ -33,7 +33,7 @@ func Check(c *gin.Context) {
 	c.Header("X-Wii-Mail-Check-Span", interval)
 
 	// Parse form in preparation for finding mail.
-	mlchkid := c.Query("mlchkid")
+	mlchkid := c.PostForm("mlchkid")
 	if mlchkid == "" {
 		ErrorResponse(c, 320, "Unable to parse parameters.")
 		return
@@ -72,7 +72,7 @@ func Check(c *gin.Context) {
 			utilities.LogError(ravenClient, "Unable to decode key", err)
 		}
 
-		chlng, err := hex.DecodeString(c.Query("chlng"))
+		chlng, err := hex.DecodeString(c.PostForm("chlng"))
 		if err != nil {
 			utilities.LogError(ravenClient, "Unable to decode chlng string", err)
 		}

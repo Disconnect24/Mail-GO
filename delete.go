@@ -18,8 +18,8 @@ func Delete(c *gin.Context) {
 		return
 	}
 
-	wiiID := c.Query("mlid")
-	isVerified, err := Auth(wiiID, c.Query("passwd"))
+	wiiID := c.PostForm("mlid")
+	isVerified, err := Auth(wiiID, c.PostForm("passwd"))
 	if err != nil {
 		ErrorResponse(c, 541, "Something weird happened.")
 		utilities.LogError(ravenClient, "Error parsing delete authentication", err)
@@ -30,7 +30,7 @@ func Delete(c *gin.Context) {
 	}
 
 	// We don't need to check mlid as it's been verified by Auth above.
-	delnum := c.Query("delnum")
+	delnum := c.PostForm("delnum")
 	actualDelnum, err := strconv.Atoi(delnum)
 	if err != nil {
 		ErrorResponse(c, 340, "Invalid delete value.")

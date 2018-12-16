@@ -78,7 +78,7 @@ func Send(c *gin.Context) {
 			if line == "DATA" {
 				// This line just tells the server beyond here to stop processing
 				// We shouldn't send that to the client, so we're done.
-				return
+				break
 			}
 
 			potentialMailFromWrapper := mailFrom.FindStringSubmatch(line)
@@ -125,8 +125,7 @@ func Send(c *gin.Context) {
 			return
 		}
 
-		// Replace all @wii.com references in the
-		// friend request email with our own domain.
+		// Replace all @wii.com references in the friend request email with our own domain.
 		// Format: w9004342343324713@wii.com <mailto:w9004342343324713@wii.com>
 		mailContents = strings.Replace(mailContents,
 			fmt.Sprintf("%s@wii.com <mailto:%s@wii.com>", senderID, senderID),
