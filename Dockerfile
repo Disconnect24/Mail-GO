@@ -1,12 +1,14 @@
-FROM golang:1.11-alpine3.8 as builder
+FROM golang:1.11.3-alpine3.8 as builder
 
 # We assume only git is needed for all dependencies.
 # openssl is already built-in.
 RUN apk add -U --no-cache git
+ENV GO111MODULE=on
 
 WORKDIR /go/src/github.com/Disconnect24/Mail-GO
-COPY docker/get.sh /go/src/github.com/Disconnect24/Mail-GO
-RUN sh get.sh
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
 
 # Copy necessary parts of the Mail-GO source into builder's source
 COPY *.go ./
@@ -14,7 +16,7 @@ COPY patch patch
 COPY utilities utilities
 
 # Build to name "app".
-RUN go build -o app .
+RUN CGO_ENABLED=0 go build -o app .
 
 ###########
 # RUNTIME #
