@@ -5,6 +5,10 @@ FROM golang:1.11.3-alpine3.8 as builder
 RUN apk add -U --no-cache git
 ENV GO111MODULE=on
 
+# Cache dockerize for later usage.
+ENV DOCKERIZE_VERSION v0.6.1
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz -O /tmp/dockerize.tar.gz
+
 WORKDIR /go/src/github.com/Disconnect24/Mail-GO
 COPY go.mod .
 COPY go.sum .
@@ -25,11 +29,10 @@ FROM alpine:3.8
 
 WORKDIR /go/src/github.com/Disconnect24/Mail-GO/
 COPY --from=builder /go/src/github.com/Disconnect24/Mail-GO/ .
+COPY --from=builder /tmp/dockerize.tar.gz .
 
-ENV DOCKERIZE_VERSION v0.6.1
-RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && apk add -U --no-cache ca-certificates
+RUN tar -C /usr/local/bin -xzvf dockerize.tar.gz && rm dockerize.tar.gz \
+        && apk add -U --no-cache ca-certificates
 
 # Wait until there's an actual MySQL connection we can use to start.
 CMD ["dockerize", "-wait", "tcp://database:3306", "-timeout", "60s", "/go/src/github.com/Disconnect24/Mail-GO/app"]
