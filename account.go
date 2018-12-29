@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha512"
 	"encoding/hex"
+	"fmt"
 	"github.com/Disconnect24/Mail-GO/utilities"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
@@ -61,9 +62,9 @@ func Account(c *gin.Context) {
 		return
 	}
 
-	c.String(http.StatusOK, "cd", is, "100", "\n",
+	c.String(http.StatusOK, fmt.Sprint("cd", is, "100", "\n",
 		"msg", is, "Success.", "\n",
 		"mlid", is, wiiID, "\n",
 		"passwd", is, passwd, "\n",
-		"mlchkid", is, mlchkid, "\n")
+		"mlchkid", is, mlchkid, "\n"))
 }
