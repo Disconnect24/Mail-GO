@@ -1,9 +1,3 @@
--- MySQL dump 10.13  Distrib 5.7.18, for Linux (x86_64)
---
--- Host: localhost    Database: WC24Mail
--- ------------------------------------------------------
--- Server version	5.7.18-0ubuntu0.16.04.1
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
@@ -53,19 +47,6 @@ CREATE TABLE `mails` (
   UNIQUE KEY `mail_id` (`mail_id`),
   KEY `message_id` (`message_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Sent mails from send.cgi';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `stats`
---
-
-DROP TABLE IF EXISTS `stats`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `stats` (
-  `WiiFC` varchar(16) NOT NULL,
-  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Statistical data';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

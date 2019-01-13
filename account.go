@@ -20,7 +20,7 @@ func Account(c *gin.Context) {
 		is = ":"
 	}
 
-	wiiID := c.PostForm("mlid")
+	wiiID := c.Query("mlid")
 	if !utilities.FriendCodeIsValid(wiiID) {
 		TypedErrorResponse(c, 610, is, "Invalid Wii Friend Code.")
 		return
