@@ -33,7 +33,7 @@ func sendGridHandler(c *gin.Context) {
 	// Figure out who sent it.
 	fromAddress, err := mail.ParseAddress(c.PostForm("from"))
 	if err != nil {
-		log.Printf("given from address is invalid: %v", err)
+		log.Printf("Given from address is invalid: %v", err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func sendGridHandler(c *gin.Context) {
 
 	wiiMail, err := FormulateMail(fromAddress.Address, toAddress, c.PostForm("subject"), text, attachedFile)
 	if err != nil {
-		log.Printf("error formulating mail: %v", err)
+		log.Printf("Error formulating mail: %v", err)
 		return
 	}
 

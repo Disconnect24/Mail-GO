@@ -74,7 +74,7 @@ func Check(c *gin.Context) {
 
 		chlng, err := hex.DecodeString(c.PostForm("chlng"))
 		if err != nil {
-			utilities.LogError(ravenClient, "Unable to decode chlng string", err)
+			utilities.LogError(ravenClient, "Unable to decode chlng", err)
 		}
 
 		h := hmac.New(sha1.New, []byte(key))
@@ -121,8 +121,6 @@ func Check(c *gin.Context) {
 		// mailFlag needs to be not one, apparently.
 		// The Wii will refuse to check otherwise.
 		mailFlag = utilities.RandStringBytesMaskImprSrc(33) // This isn't how Nintendo did the mail flag, how they did it is currently unknown.
-	} else {
-		// mailFlag was already set to 0 above.
 	}
 
 	// https://github.com/RiiConnect24/Mail-Go/wiki/check.cgi for response format

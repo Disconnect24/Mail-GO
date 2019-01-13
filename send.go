@@ -128,8 +128,8 @@ func Send(c *gin.Context) {
 		// Replace all @wii.com references in the friend request email with our own domain.
 		// Format: w9004342343324713@wii.com <mailto:w9004342343324713@wii.com>
 		mailContents = strings.Replace(mailContents,
-			fmt.Sprintf("%s@wii.com <mailto:%s@wii.com>", senderID, senderID),
-			fmt.Sprintf("%s@%s <mailto:%s@%s>", senderID, global.SendGridDomain, senderID, global.SendGridDomain),
+			fmt.Sprintf("%s@wii.com", senderID),
+			fmt.Sprintf("%s@%s", senderID, global.SendGridDomain),
 			-1)
 
 		// We're done figuring out the mail, now it's time to act as needed.
