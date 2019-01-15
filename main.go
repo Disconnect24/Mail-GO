@@ -60,7 +60,7 @@ func main() {
 	if global.Debug {
 		log.Println("Connecting to MySQL...")
 	}
-	db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+	db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&collation=utf8mb4_unicode_ci",
 		global.Username, global.Password, global.Host, global.Port, global.DBName))
 	if err != nil {
 		panic(err)
